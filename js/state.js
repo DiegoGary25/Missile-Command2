@@ -6,6 +6,7 @@ var State = {
   explosions:[],
   gravityWells:[],
   mines:[],
+  shrapnels:[],
   score:0,
   round:1,
   enemiesToSpawn:0,
@@ -42,6 +43,7 @@ function resetState(){
   State.explosions=[];
   State.gravityWells=[];
   State.mines=[];
+  State.shrapnels=[];
   State.score=0;
   State.round=1;
   State.enemiesToSpawn=0;

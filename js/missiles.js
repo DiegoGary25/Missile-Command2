@@ -19,7 +19,7 @@ function shoot(turret,x,y){
   }
 }
 
-function cooldown(){ return State.overdriveUntil>now()?CONSTANTS.TURRET_COOLDOWN/2:CONSTANTS.TURRET_COOLDOWN; }
+function cooldown(){ return State.overdriveUntil>now()?CONSTANTS.TURRET_COOLDOWN/4:CONSTANTS.TURRET_COOLDOWN; }
 
 function fireNormal(turret,x,y){
   consumeCharge(turret); turret.cool=cooldown(); play('shoot');
@@ -120,6 +120,7 @@ function updateMissiles(dt){
     }
     if(e.life<=0) State.explosions.splice(j,1);
   }
+  updateShrapnels(dt);
   updateGravity(dt);
   updateMines(dt);
 }
@@ -145,21 +146,22 @@ function explode(x,y,opts){
   State.explosions.push(exp);
   if(!opts || !opts.visual){ play('bomb'); shake(); }
   if(opts && opts.cluster){
-    (function(){
-      for(var s=0;s<12;s++){
-        (function(idx){
-          var ang=-Math.PI/2+idx*Math.PI*2/12;
-          setTimeout(function(){
-            var ex=x+Math.cos(ang)*max;
-            var ey=y+Math.sin(ang)*max;
-            explode(ex,ey,{small:true,turretIndex:opts.turretIndex});
-          },1000+idx*100);
-        })(s);
-      }
-    })();
+    var travel=0.2;
+    for(var s=0;s<12;s++){
+      (function(idx){
+        var ang=-Math.PI/2+idx*Math.PI*2/12;
+        var ex=x+Math.cos(ang)*max;
+        var ey=y+Math.sin(ang)*max;
+        var vx=Math.cos(ang)*max/travel;
+        var vy=Math.sin(ang)*max/travel;
+        setTimeout(function(){
+          State.shrapnels.push({x:x,y:y,vx:vx,vy:vy,life:travel,ex:ex,ey:ey,turretIndex:opts.turretIndex});
+        },1000+idx*100-travel*1000);
+      })(s);
+    }
   }
   if(opts && opts.gravity){
-    State.gravityWells.push({x:x,y:y,rad:CONSTANTS.EXPLOSION_RADIUS*3,time:0,turretIndex:opts.turretIndex});
+    State.gravityWells.push({x:x,y:y,rad:CONSTANTS.EXPLOSION_RADIUS*4.8,time:0,turretIndex:opts.turretIndex});
     play('powerup');
     return;
   }
@@ -177,12 +179,16 @@ function explode(x,y,opts){
 }
 
 function spawnMines(x,y,ti){
-  for(var i=0;i<5;i++){
-    var ang=randRange(0,Math.PI*2);
-    var dist=CONSTANTS.EXPLOSION_RADIUS*3*randRange(0.8,1.2);
-    var speed=dist/CONSTANTS.MINE_ARM;
-    State.mines.push({x:x,y:y,vx:Math.cos(ang)*speed,vy:Math.sin(ang)*speed,armed:false,arm:now()+CONSTANTS.MINE_ARM,expire:now()+CONSTANTS.MINE_LIFE,turretIndex:ti});
-  }
+  explode(x,y,{turretIndex:ti});
+  setTimeout(function(){
+    for(var i=0;i<5;i++){
+      var ang=randRange(0,Math.PI*2);
+      var dist=CONSTANTS.EXPLOSION_RADIUS*5*Math.sqrt(Math.random());
+      var px=x+Math.cos(ang)*dist;
+      var py=y+Math.sin(ang)*dist;
+      State.mines.push({x:px,y:py,armed:false,arm:now()+CONSTANTS.MINE_ARM,expire:now()+CONSTANTS.MINE_LIFE,turretIndex:ti});
+    }
+  },300);
 }
 
 function updateGravity(dt){
@@ -190,17 +196,25 @@ function updateGravity(dt){
     var g=State.gravityWells[i];
     g.time+=dt;
     if(g.time<CONSTANTS.GRAVITY_DURATION){
+      var base=120+State.round*15;
+      var outer=g.rad*2;
       for(var j=0;j<State.enemies.length;j++){
         var e=State.enemies[j];
         var dx=g.x-e.x, dy=g.y-e.y;
         var d=Math.sqrt(dx*dx+dy*dy);
-        if(d<g.rad){
-          var pull=(1-d/g.rad)*100*dt;
-          if(d>0){e.x+=dx/d*pull; e.y+=dy/d*pull;}
+        if(d<outer && d>0){
+          var pull;
+          if(d<g.rad){
+            pull=(1-d/g.rad)*base;
+          }else{
+            pull=(1-(d-g.rad)/g.rad)*base*0.4;
+          }
+          pull*=dt;
+          e.x+=dx/d*pull; e.y+=dy/d*pull;
         }
       }
     }else{
-      explode(g.x,g.y,{radius:CONSTANTS.EXPLOSION_RADIUS*2,turretIndex:g.turretIndex});
+      explode(g.x,g.y,{radius:CONSTANTS.EXPLOSION_RADIUS*3.2,turretIndex:g.turretIndex});
       State.gravityWells.splice(i,1);
     }
   }
@@ -209,10 +223,7 @@ function updateGravity(dt){
 function updateMines(dt){
   for(var i=State.mines.length-1;i>=0;i--){
     var m=State.mines[i];
-    if(!m.armed){
-      m.x+=m.vx*dt; m.y+=m.vy*dt;
-      if(now()>=m.arm){m.armed=true; m.vx=m.vy=0;}
-    }
+    if(!m.armed && now()>=m.arm){m.armed=true;}
     if(now()>=m.expire){
       explode(m.x,m.y,{turretIndex:m.turretIndex});
       State.mines.splice(i,1);
@@ -228,6 +239,20 @@ function updateMines(dt){
           break;
         }
       }
+    }
+  }
+}
+
+function updateShrapnels(dt){
+  for(var i=State.shrapnels.length-1;i>=0;i--){
+    var s=State.shrapnels[i];
+    s.life-=dt;
+    if(s.life<=0){
+      explode(s.ex,s.ey,{small:true,turretIndex:s.turretIndex});
+      State.shrapnels.splice(i,1);
+    }else{
+      s.x+=s.vx*dt;
+      s.y+=s.vy*dt;
     }
   }
 }
@@ -262,6 +287,16 @@ function drawMissiles(ctx){
     ctx.fillRect(-sz-tail,-sz/3,tail,sz/1.5);
     ctx.restore();
   }
+  for(var s=0;s<State.shrapnels.length;s++){
+    var p=State.shrapnels[s];
+    ctx.strokeStyle='#fff';
+    ctx.beginPath();
+    ctx.moveTo(p.x-p.vx*0.03,p.y-p.vy*0.03);
+    ctx.lineTo(p.x,p.y);
+    ctx.stroke();
+    ctx.fillStyle='#fff';
+    ctx.beginPath(); ctx.arc(p.x,p.y,1,0,Math.PI*2); ctx.fill();
+  }
   for(var j=0;j<State.explosions.length;j++){
     var e=State.explosions[j];
     ctx.strokeStyle='rgba(255,255,255,0.6)';
@@ -276,7 +311,10 @@ function drawMissiles(ctx){
     ctx.strokeStyle='rgba(127,81,255,0.6)';
     ctx.beginPath(); ctx.arc(w.x,w.y,r,0,Math.PI*2); ctx.stroke();
     ctx.save(); ctx.translate(w.x,w.y); ctx.rotate(now()*2); ctx.strokeStyle='rgba(127,81,255,0.3)';
-    ctx.beginPath(); ctx.moveTo(0,0); ctx.lineTo(r,0); ctx.stroke(); ctx.restore();
+    ctx.beginPath(); ctx.arc(0,0,r*0.7,0,Math.PI*1.2); ctx.stroke();
+    ctx.restore();
+    ctx.strokeStyle='rgba(127,81,255,0.2)';
+    ctx.beginPath(); ctx.arc(w.x,w.y,w.rad*2,0,Math.PI*2); ctx.stroke();
   }
   for(var m=0;m<State.mines.length;m++){
     var mine=State.mines[m];
