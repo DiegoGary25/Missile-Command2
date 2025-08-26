@@ -7,6 +7,7 @@
 :root{
   --bg:#0d0f12; --ui:#ffffff;
   --accent1:#51FFD6; --accent2:#7F51FF; --accent3:#FF517A; --accent4:#D1FF51;
+  --primaryBlue:#51A4FF;
   --warning:#FFB016; --panel:#141820; --bar:#1c2330;
 }
 

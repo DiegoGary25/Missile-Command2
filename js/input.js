@@ -18,7 +18,9 @@ function initInput(canvas){
     arr.sort(function(a,b){return a.d-b.d;});
     for(i=0;i<arr.length;i++){
       var turret=arr[i].t;
-      if(turret.alive && turret.ammo>0 && turret.cool<=0){
+      var available=0;
+      for(var c=0;c<2;c++) if(turret.charges[c]<=0) available++;
+      if(turret.alive && available>0 && turret.cool<=0){
         shoot(turret,x,y);
         break;
       }

@@ -5,7 +5,7 @@ function maybeSpawnCarrier(){
     var target=pickTarget();
     if(target){
       var x=randRange(40,CONSTANTS.WIDTH-40);
-      State.enemies.push({x:x,y:0,tx:target.x,ty:target.y,speed:CONSTANTS.ENEMY_SPEED*0.8,type:'normal',split:0,carrier:true,power:pick(['cluster','freezer','chain','seeker']),hitBy:0,target:target});
+      State.enemies.push({x:x,y:0,tx:target.x,ty:target.y,speed:CONSTANTS.ENEMY_SPEED*0.8,type:'normal',stage:0,carrier:true,power:pick(['cluster','freezer','chain','seeker']),hitBy:0,target:target});
     }
   }
 }
