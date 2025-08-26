@@ -198,9 +198,16 @@ function drawTurrets(){
     var baseY=CONSTANTS.HEIGHT-40;
     ctx.save();
     ctx.translate(t.x,baseY);
+    var od=State.overdriveUntil>now();
+    if(od){
+      var pulse=20+10*Math.sin(now()*8);
+      ctx.shadowColor='rgba(255,81,122,0.5)';
+      ctx.shadowBlur=pulse;
+    }
     ctx.fillStyle='#000';
     ctx.fillRect(-10,0,20,10);
-    ctx.rotate(t.angle);
+    var vib=od?0.1*Math.sin(now()*60+i):0;
+    ctx.rotate(t.angle+vib);
     ctx.fillStyle='#fff';
     ctx.fillRect(0,-2,20,4);
     ctx.restore();

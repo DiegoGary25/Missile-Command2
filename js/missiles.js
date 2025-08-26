@@ -147,6 +147,7 @@ function explode(x,y,opts){
   if(!opts || !opts.visual){ play('bomb'); shake(); }
   if(opts && opts.cluster){
     var travel=0.2;
+    var base=2000, step=200;
     for(var s=0;s<12;s++){
       (function(idx){
         var ang=-Math.PI/2+idx*Math.PI*2/12;
@@ -156,7 +157,7 @@ function explode(x,y,opts){
         var vy=Math.sin(ang)*max/travel;
         setTimeout(function(){
           State.shrapnels.push({x:x,y:y,vx:vx,vy:vy,life:travel,ex:ex,ey:ey,turretIndex:opts.turretIndex});
-        },1000+idx*100-travel*1000);
+        },base+idx*step-travel*1000);
       })(s);
     }
   }
@@ -183,7 +184,7 @@ function spawnMines(x,y,ti){
   setTimeout(function(){
     for(var i=0;i<5;i++){
       var ang=randRange(0,Math.PI*2);
-      var dist=CONSTANTS.EXPLOSION_RADIUS*5*Math.sqrt(Math.random());
+      var dist=CONSTANTS.EXPLOSION_RADIUS*10*Math.sqrt(Math.random());
       var px=x+Math.cos(ang)*dist;
       var py=y+Math.sin(ang)*dist;
       State.mines.push({x:px,y:py,armed:false,arm:now()+CONSTANTS.MINE_ARM,expire:now()+CONSTANTS.MINE_LIFE,turretIndex:ti});
@@ -248,7 +249,7 @@ function updateShrapnels(dt){
     var s=State.shrapnels[i];
     s.life-=dt;
     if(s.life<=0){
-      explode(s.ex,s.ey,{small:true,turretIndex:s.turretIndex});
+      explode(s.ex,s.ey,{radius:CONSTANTS.EXPLOSION_RADIUS,turretIndex:s.turretIndex});
       State.shrapnels.splice(i,1);
     }else{
       s.x+=s.vx*dt;
@@ -283,7 +284,8 @@ function drawMissiles(ctx){
     ctx.closePath();
     ctx.fill();
     ctx.fillRect(-sz,-sz/2,sz*0.6,sz);
-    var tail=(m.od?4:2)+Math.sin(now()*40);
+    var tail=(m.od?8:2)+Math.sin(now()*40);
+    if(m.od){ctx.shadowColor=CONSTANTS.COLORS.ACCENT3; ctx.shadowBlur=8;}
     ctx.fillRect(-sz-tail,-sz/3,tail,sz/1.5);
     ctx.restore();
   }
