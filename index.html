@@ -1,42 +1,48 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-  <meta charset="UTF-8" />
-  <title>Asteroids Arcade</title>
+  <meta charset="utf-8" />
+  <title>Missile Command — Diego Collection</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <link rel="preload" href="Fonts/GT-Pressura-Standard-Regular.woff2" as="font" type="font/woff2" crossorigin>
   <link rel="stylesheet" href="style.css" />
 </head>
 <body>
   <div id="shell">
-    <!-- Left bar -->
-    <div id="powerup">
-      <div id="powerup-fill"></div>
-    </div>
+    <div id="powerup"><div id="powerup-fill"></div></div>
 
-    <!-- Playfield (overlay + vignette are pinned to this box) -->
     <div id="playfield">
       <canvas id="game" width="800" height="600"></canvas>
-      <div id="vignette" class="hidden"></div>
+      <div id="vignette"></div>
 
-      <!-- Breakout-style overlay -->
       <div id="overlay" class="hidden">
         <div id="overlayBox">
-          <div id="message">GAME OVER</div>
-          <button id="playAgain">Restart</button>
+          <div id="message">Game Over</div>
+          <button id="playAgain">Play Again</button>
         </div>
       </div>
+
+      <div id="scoreHud">0</div>
     </div>
 
-    <!-- Right bar -->
     <div id="multiplier">
       <div id="multiplier-fill"></div>
       <span id="multiplier-label">x1</span>
     </div>
   </div>
 
-  <!-- Global banners/announcements (optional) -->
   <div id="announcements"></div>
 
-  <!-- Your game logic -->
-  <script src="game.js"></script>
+  <script defer src="js/constants.js"></script>
+  <script defer src="js/state.js"></script>
+  <script defer src="js/utils.js"></script>
+  <script defer src="js/audio.js"></script>
+  <script defer src="js/input.js"></script>
+  <script defer src="js/enemies.js"></script>
+  <script defer src="js/missiles.js"></script>
+  <script defer src="js/powerups.js"></script>
+  <script defer src="js/effects.js"></script>
+  <script defer src="js/ui.js"></script>
+  <script defer src="js/main.js"></script>
 </body>
 </html>
