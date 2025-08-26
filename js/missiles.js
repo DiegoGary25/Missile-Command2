@@ -118,17 +118,14 @@ function explode(x,y,opts){
   State.explosions.push(exp);
   if(!opts || !opts.visual){ play('bomb'); shake(); }
   if(opts && opts.cluster){
-    var N=12; var groups=3; var rad=max; var small=rad*0.5;
-    for(var g=0; g<groups; g++){
-      (function(g){
-        setTimeout(function(){
-          for(var a=0;a<4;a++){
-            var angle=(g*4+a)*Math.PI*2/N;
-            State.explosions.push({x:x+Math.cos(angle)*rad,y:y+Math.sin(angle)*rad,r:1,max:small,life:0.2,turretIndex:exp.turretIndex});
-          }
-        }, g*50);
-      })(g);
-    }
+    setTimeout(function(){
+      var rad=max;
+      var small=CONSTANTS.EXPLOSION_RADIUS*0.5;
+      for(var a=0;a<8;a++){
+        var angle=a*Math.PI/4;
+        State.explosions.push({x:x+Math.cos(angle)*rad,y:y+Math.sin(angle)*rad,r:1,max:small,life:0.2,turretIndex:exp.turretIndex});
+      }
+    },800);
   }
   if(opts && opts.freezer){
     State.freezeUntil=now()+CONSTANTS.FREEZE_DURATION; setBlueActive(true); play('powerup');

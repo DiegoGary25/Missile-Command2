@@ -42,7 +42,7 @@ function maybeRestoreAssets(){
         reviveCity(missingCities[1]); restored++;
       }
     }
-    if(restored>0) banner('EXTRA LIFE');
+    if(restored>0){ banner('EXTRA LIFE'); play('reward'); }
     State.nextExtra+=CONSTANTS.EXTRA_CITY_THRESH;
   }
 }
@@ -114,7 +114,16 @@ function loop(t){
     var turr=State.turrets[i];
     if(!turr.alive) continue;
     if(turr.cool>0) turr.cool-=dt;
-    for(var c=0;c<2;c++){ if(turr.charges[c]>0){ turr.charges[c]-=dt; if(turr.charges[c]<0) turr.charges[c]=0; } }
+    for(var c=0;c<2;c++){
+      if(turr.charges[c]>0){
+        var was=turr.charges[c];
+        turr.charges[c]-=dt;
+        if(turr.charges[c]<=0){
+          turr.charges[c]=0;
+          if(was>0) play('reload');
+        }
+      }
+    }
     var desired=Math.atan2(State.mouseY-(CONSTANTS.HEIGHT-40),State.mouseX-turr.x);
     turr.angle+= (desired-turr.angle)*0.1;
   }
@@ -139,7 +148,6 @@ function loop(t){
   if(State.multiplierCharge>=100){
     State.multiplierCharge-=100;
     State.multiplierLevel++;
-    banner('x'+State.multiplierLevel);
   }
   draw();
   updateUI();
@@ -214,6 +222,7 @@ function drawCharges(turret){
     ctx.lineTo(0, h*0.3);
     ctx.closePath();
     ctx.stroke();
+    if(rem<=0){ctx.strokeStyle='#fff'; ctx.stroke();}
     ctx.save();
     ctx.clip();
     if(frac>0){

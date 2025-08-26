@@ -8,10 +8,11 @@ var SFX={
   asteroidSplit:[500,0.2],
   asteroidDestroy:[300,0.3],
   bomb:[200,0.25],
-  enemySpawn:[400,0.1],
   enemyShot:[250,0.2],
   playerHit:[150,0.3],
   powerup:[1000,0.3],
+  reload:[900,0.1],
+  reward:[1000,0.4],
   wave:[440,0.4],
   waveClear:[660,0.4],
   ui:[550,0.1]

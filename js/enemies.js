@@ -19,7 +19,6 @@ function spawnWave(dt){
       if(State.round>2 && Math.random()<0.15){type='splitter'; speed=CONSTANTS.SPLITTER_SPEED;}
       if(State.round===1) speed*=0.6;
       State.enemies.push({x:sx,y:0,tx:target.x,ty:target.y,speed:speed,type:type,stage:0,carrier:false,target:target});
-      play('enemySpawn');
       State.enemiesToSpawn--;
     }
   }
@@ -47,7 +46,7 @@ function enemyHit(index){
   State.enemies.splice(index,1);
   State.score+=CONSTANTS.POINTS_PER_KILL*State.multiplierLevel;
   State.multiplierCharge+=CONSTANTS.MULTIPLIER_CHARGE;
-  if(State.multiplierCharge>=100){State.multiplierCharge-=100; State.multiplierLevel++; banner('x'+State.multiplierLevel);}
+  if(State.multiplierCharge>=100){State.multiplierCharge-=100; State.multiplierLevel++;}
   play('asteroidDestroy');
   maybeRestoreAssets();
 }
