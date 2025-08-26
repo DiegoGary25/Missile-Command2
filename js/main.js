@@ -12,32 +12,61 @@ function startGame(){
 
 function startRound(){
   banner('ROUND '+State.round);
-  play('level_start');
+  play('wave');
   State.enemiesToSpawn=10+State.round*5;
   State.nextPowerup=0;
   for(var i=0;i<State.turrets.length;i++){
-    if(State.turrets[i].alive) State.turrets[i].ammo=CONSTANTS.AMMO_PER_ROUND;
+    if(State.turrets[i].alive) State.turrets[i].charges=[0,0];
   }
 }
 
-function maybeExtraCity(){
+function maybeRestoreAssets(){
   if(State.score>=State.nextExtra){
-    var revived=false;
-    for(var i=0;i<State.cities.length;i++){
-      if(!State.cities[i].alive){State.cities[i].alive=true; revived=true; banner('EXTRA CITY'); break;}
+    var missingTurrets=[], missingCities=[];
+    for(var i=0;i<State.turrets.length;i++) if(!State.turrets[i].alive) missingTurrets.push(i);
+    for(var j=0;j<State.cities.length;j++) if(!State.cities[j].alive) missingCities.push(j);
+    var restored=0;
+    if(missingTurrets.length>=2 && missingCities.length===0){
+      reviveTurret(missingTurrets[0]); restored++;
+      reviveTurret(missingTurrets[1]); restored++;
+    }else if(missingTurrets.length>=1){
+      reviveTurret(missingTurrets[0]); restored++;
+      if(missingCities.length>0){
+        reviveCity(missingCities[0]); restored++;
+      }else if(missingTurrets.length>1){
+        reviveTurret(missingTurrets[1]); restored++;
+      }
+    }else if(missingCities.length>0){
+      reviveCity(missingCities[0]); restored++;
+      if(missingCities.length>1){
+        reviveCity(missingCities[1]); restored++;
+      }
     }
-    if(!revived){State.score+=CONSTANTS.CITY_BONUS; banner('BONUS '+CONSTANTS.CITY_BONUS);}
+    if(restored>0) banner('EXTRA LIFE');
     State.nextExtra+=CONSTANTS.EXTRA_CITY_THRESH;
   }
+}
+
+function reviveCity(index){
+  var c=State.cities[index];
+  if(!c.alive){c.alive=true;}
+}
+
+function reviveTurret(index){
+  var t=State.turrets[index];
+  if(!t.alive){t.alive=true; t.charges=[0,0]; t.cool=0; t.special=null;}
 }
 
 function destroyCity(index){
   var c=State.cities[index];
   if(!c.alive) return;
   c.alive=false;
-  play('impact_city');
+  play('playerHit');
   State.multiplierLevel=Math.max(1,State.multiplierLevel-1);
+  State.multiplierCharge=100;
+  State.multiplierDowngraded=true;
   flashRed();
+  explode(c.x,CONSTANTS.HEIGHT-20,{visual:true});
   var alive=0; for(var i=0;i<State.cities.length;i++) if(State.cities[i].alive) alive++;
   if(alive===0){showGameOver();}
 }
@@ -46,9 +75,25 @@ function destroyTurret(index){
   var t=State.turrets[index];
   if(!t.alive) return;
   t.alive=false;
-  play('impact_turret');
+  play('playerHit');
   State.multiplierLevel=Math.max(1,State.multiplierLevel-1);
+  State.multiplierCharge=100;
+  State.multiplierDowngraded=true;
   flashRed();
+  explode(t.x,CONSTANTS.HEIGHT-40,{visual:true});
+  var alive=0; for(var i=0;i<State.turrets.length;i++) if(State.turrets[i].alive) alive++;
+  if(alive===0){
+    State.enemiesToSpawn=0;
+    State.enemies=[];
+    for(var c=0;c<State.cities.length;c++){
+      var city=State.cities[c];
+      if(city.alive){
+        city.alive=false;
+        explode(city.x,CONSTANTS.HEIGHT-20,{visual:true});
+      }
+    }
+    showGameOver();
+  }
 }
 
 function init(){
@@ -69,6 +114,7 @@ function loop(t){
     var turr=State.turrets[i];
     if(!turr.alive) continue;
     if(turr.cool>0) turr.cool-=dt;
+    for(var c=0;c<2;c++){ if(turr.charges[c]>0){ turr.charges[c]-=dt; if(turr.charges[c]<0) turr.charges[c]=0; } }
     var desired=Math.atan2(State.mouseY-(CONSTANTS.HEIGHT-40),State.mouseX-turr.x);
     turr.angle+= (desired-turr.angle)*0.1;
   }
@@ -76,9 +122,25 @@ function loop(t){
   updateEnemies(dt);
   updateMissiles(dt);
   if(State.freezeUntil && now()>State.freezeUntil){State.freezeUntil=0; setBlueActive(false);}
-  State.multiplierCharge-=CONSTANTS.MULTIPLIER_DECAY*dt;
-  if(State.multiplierCharge<0){State.multiplierCharge=0; if(State.multiplierLevel>1) State.multiplierLevel--;}
-  if(State.multiplierCharge>=100){State.multiplierCharge=0; State.multiplierLevel++; banner('x'+State.multiplierLevel);}
+  if(State.multiplierDowngraded){
+    State.multiplierDowngraded=false;
+  }else{
+    State.multiplierCharge-=CONSTANTS.MULTIPLIER_DECAY*dt;
+  }
+  if(State.multiplierCharge<0){
+    if(State.multiplierLevel>1){
+      State.multiplierLevel--;
+      State.multiplierCharge=100;
+      State.multiplierDowngraded=true;
+    }else{
+      State.multiplierCharge=0;
+    }
+  }
+  if(State.multiplierCharge>=100){
+    State.multiplierCharge-=100;
+    State.multiplierLevel++;
+    banner('x'+State.multiplierLevel);
+  }
   draw();
   updateUI();
   if(State.enemiesToSpawn<=0 && State.enemies.length===0 && State.playerMissiles.length===0 && State.explosions.length===0){
@@ -97,7 +159,7 @@ function draw(){
 
 function drawTerrain(){
   var base=CONSTANTS.HEIGHT-20;
-  ctx.fillStyle=CONSTANTS.COLORS.ACCENT1;
+  ctx.fillStyle=CONSTANTS.COLORS.ACCENT2;
   ctx.beginPath();
   ctx.moveTo(0,base);
   for(var i=0;i<CONSTANTS.TURRETS.length;i++){
@@ -127,24 +189,41 @@ function drawTurrets(){
     ctx.fillStyle='#fff';
     ctx.fillRect(0,-2,20,4);
     ctx.restore();
-    drawAmmo(t);
+    drawCharges(t);
   }
 }
 
-function drawAmmo(turret){
+function drawCharges(turret){
   if(!turret.alive) return;
-  var x=turret.x-15;
-  var y=CONSTANTS.HEIGHT-8;
-  ctx.save();
-  ctx.translate(x,y);
-  ctx.fillStyle=turret.special?CONSTANTS.COLORS.ACCENT3:'#fff';
-  ctx.beginPath();
-  ctx.moveTo(2,-6);ctx.lineTo(4,0);ctx.lineTo(2,6);ctx.lineTo(-6,6);ctx.lineTo(-6,-6);ctx.closePath();
-  ctx.fill();
-  ctx.fillStyle='#fff';
-  ctx.font='12px sans-serif';
-  ctx.fillText('x'+turret.ammo,8,4);
-  ctx.restore();
+  var w=8, h=12, gap=10; var baseY=CONSTANTS.HEIGHT-8;
+  for(var i=0;i<2;i++){
+    var rem=turret.charges[i];
+    var frac=1-(rem/CONSTANTS.CHARGE_TIME);
+    var col=turret.special?CONSTANTS.COLORS.ACCENT3:CONSTANTS.COLORS.ACCENT4;
+    var x=turret.x - w - gap/2 + i*(w+gap);
+    var y=baseY-h;
+    ctx.save();
+    ctx.translate(x,y);
+    ctx.globalAlpha=rem>0?0.3:1;
+    ctx.strokeStyle='#444';
+    ctx.beginPath();
+    ctx.moveTo(w/2,0);
+    ctx.lineTo(w, h*0.3);
+    ctx.lineTo(w, h);
+    ctx.lineTo(0, h);
+    ctx.lineTo(0, h*0.3);
+    ctx.closePath();
+    ctx.stroke();
+    ctx.save();
+    ctx.clip();
+    if(frac>0){
+      ctx.globalAlpha=1;
+      ctx.fillStyle=col;
+      ctx.fillRect(0,h*(1-frac),w,h*frac);
+    }
+    ctx.restore();
+    ctx.restore();
+  }
 }
 
 function drawCities(){
@@ -161,10 +240,10 @@ function drawCities(){
 
 function endRound(){
   var alive=0; for(var i=0;i<State.cities.length;i++) if(State.cities[i].alive) alive++;
-  var ammo=0; for(var j=0;j<State.turrets.length;j++) ammo+=State.turrets[j].ammo;
-  var bonus=(alive*CONSTANTS.CITY_BONUS+ammo*10)*State.multiplierLevel;
-  if(bonus>0){State.score+=bonus; banner('BONUS '+bonus); maybeExtraCity();}
+  var bonus=(alive*CONSTANTS.CITY_BONUS)*State.multiplierLevel;
+  if(bonus>0){State.score+=bonus; banner('BONUS '+bonus); maybeRestoreAssets();}
   State.round++;
+  play('waveClear');
   startRound();
 }
 
