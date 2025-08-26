@@ -4,18 +4,24 @@ var State = {
   enemies:[],
   playerMissiles:[],
   explosions:[],
+  gravityWells:[],
+  mines:[],
   score:0,
   round:1,
   enemiesToSpawn:0,
+  totalEnemies:0,
+  spawnedEnemies:0,
+  powerupsSpawned:0,
+  nextPowerThreshold:0,
   multiplierLevel:1,
   multiplierCharge:0,
   multiplierDowngraded:false,
   freezeUntil:0,
-  nextPowerup:0,
   bannerTimer:0,
   mouseX:400,
   mouseY:300,
-  nextExtra:50000
+  nextExtra:50000,
+  overdriveUntil:0
 };
 
 function resetState(){
@@ -34,15 +40,21 @@ function resetState(){
   State.enemies=[];
   State.playerMissiles=[];
   State.explosions=[];
+  State.gravityWells=[];
+  State.mines=[];
   State.score=0;
   State.round=1;
   State.enemiesToSpawn=0;
+  State.totalEnemies=0;
+  State.spawnedEnemies=0;
+  State.powerupsSpawned=0;
+  State.nextPowerThreshold=0;
   State.multiplierLevel=1;
   State.multiplierCharge=0;
   State.multiplierDowngraded=false;
   State.freezeUntil=0;
-  State.nextPowerup=0;
   State.bannerTimer=0;
   State.mouseX=400; State.mouseY=300;
   State.nextExtra=CONSTANTS.EXTRA_CITY_THRESH;
+  State.overdriveUntil=0;
 }

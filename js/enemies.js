@@ -20,6 +20,7 @@ function spawnWave(dt){
       if(State.round===1) speed*=0.6;
       State.enemies.push({x:sx,y:0,tx:target.x,ty:target.y,speed:speed,type:type,stage:0,carrier:false,target:target});
       State.enemiesToSpawn--;
+      State.spawnedEnemies++;
     }
   }
   maybeSpawnCarrier();

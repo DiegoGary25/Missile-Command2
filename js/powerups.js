@@ -1,11 +1,12 @@
 function maybeSpawnCarrier(){
-  if(State.nextPowerup>=CONSTANTS.MAX_POWERUPS) return;
-  if(State.nextPowerup<State.round && State.enemies.length>3){
-    State.nextPowerup++;
+  if(State.powerupsSpawned>=CONSTANTS.MAX_POWERUPS) return;
+  if(State.spawnedEnemies>=State.nextPowerThreshold){
+    State.powerupsSpawned++;
+    State.nextPowerThreshold+=State.totalEnemies/CONSTANTS.MAX_POWERUPS;
     var target=pickTarget();
     if(target){
       var x=randRange(40,CONSTANTS.WIDTH-40);
-      State.enemies.push({x:x,y:0,tx:target.x,ty:target.y,speed:CONSTANTS.ENEMY_SPEED*0.8,type:'normal',stage:0,carrier:true,power:pick(['cluster','freezer','chain','seeker']),hitBy:0,target:target});
+      State.enemies.push({x:x,y:0,tx:target.x,ty:target.y,speed:CONSTANTS.ENEMY_SPEED*0.8,type:'normal',stage:0,carrier:true,power:pick(['cluster','freezer','chain','seeker','gravity','overdrive','mine']),hitBy:0,target:target});
     }
   }
 }

@@ -13,8 +13,13 @@ function startGame(){
 function startRound(){
   banner('ROUND '+State.round);
   play('wave');
-  State.enemiesToSpawn=10+State.round*5;
-  State.nextPowerup=0;
+  State.totalEnemies=10+State.round*5;
+  State.enemiesToSpawn=State.totalEnemies;
+  State.spawnedEnemies=0;
+  State.powerupsSpawned=0;
+  State.nextPowerThreshold=State.totalEnemies/CONSTANTS.MAX_POWERUPS;
+  State.mines=[];
+  State.gravityWells=[];
   for(var i=0;i<State.turrets.length;i++){
     if(State.turrets[i].alive) State.turrets[i].charges=[0,0];
   }
@@ -248,6 +253,10 @@ function drawCities(){
 }
 
 function endRound(){
+  for(var m=0;m<State.mines.length;m++){
+    explode(State.mines[m].x,State.mines[m].y,{turretIndex:State.mines[m].turretIndex});
+  }
+  State.mines=[];
   var alive=0; for(var i=0;i<State.cities.length;i++) if(State.cities[i].alive) alive++;
   var bonus=(alive*CONSTANTS.CITY_BONUS)*State.multiplierLevel;
   if(bonus>0){State.score+=bonus; banner('BONUS '+bonus); maybeRestoreAssets();}
