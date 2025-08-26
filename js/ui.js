@@ -7,7 +7,7 @@ function initUI(){
   overlayEl=document.getElementById('overlay');
   messageEl=document.getElementById('message');
   playAgainEl=document.getElementById('playAgain');
-  playAgainEl.addEventListener('click',function(){hideGameOver(); startGame();});
+  playAgainEl.addEventListener('click',function(){play('ui'); hideGameOver(); startGame();});
 }
 
 function updateUI(){
@@ -20,7 +20,7 @@ function updateUI(){
 function showGameOver(){
   overlayEl.classList.remove('hidden');
   messageEl.textContent='Game Over';
-  play('gameover');
+  play('ui');
 }
 
 function hideGameOver(){

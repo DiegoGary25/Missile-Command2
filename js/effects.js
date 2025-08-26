@@ -19,7 +19,7 @@ function flashRed(){
 function setBlueActive(a){
   if(a){vignetteEl.classList.add('blue');}
   else{vignetteEl.classList.remove('blue');}
-  if(!a) play('freeze_off');
+  if(!a) play('powerup');
 }
 
 function banner(text){
