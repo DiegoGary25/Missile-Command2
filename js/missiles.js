@@ -1,3 +1,9 @@
+function consumeCharge(turret){
+  for(var i=0;i<2;i++){
+    if(turret.charges[i]<=0){turret.charges[i]=CONSTANTS.CHARGE_TIME; break;}
+  }
+}
+
 function shoot(turret,x,y){
   if(turret.special){
     if(turret.special==='cluster') fireCluster(turret,x,y);
@@ -11,30 +17,40 @@ function shoot(turret,x,y){
 }
 
 function fireNormal(turret,x,y){
-  turret.ammo--; turret.cool=CONSTANTS.TURRET_COOLDOWN; play('shoot');
+  consumeCharge(turret); turret.cool=CONSTANTS.TURRET_COOLDOWN; play('shoot');
   State.playerMissiles.push({turretIndex:turret.id,x:turret.x,y:CONSTANTS.HEIGHT-40,tx:x,ty:y,spd:CONSTANTS.MISSILE_SPEED,ang:Math.atan2(y-(CONSTANTS.HEIGHT-40),x-turret.x)});
 }
 
 function fireCluster(turret,x,y){
-  turret.ammo--; turret.cool=CONSTANTS.TURRET_COOLDOWN; play('shoot');
+  consumeCharge(turret); turret.cool=CONSTANTS.TURRET_COOLDOWN; play('shoot');
   State.playerMissiles.push({turretIndex:turret.id,cluster:true,x:turret.x,y:CONSTANTS.HEIGHT-40,tx:x,ty:y,spd:CONSTANTS.MISSILE_SPEED,ang:Math.atan2(y-(CONSTANTS.HEIGHT-40),x-turret.x)});
 }
 function fireFreezer(turret,x,y){
-  turret.ammo--; turret.cool=CONSTANTS.TURRET_COOLDOWN; play('shoot');
+  consumeCharge(turret); turret.cool=CONSTANTS.TURRET_COOLDOWN; play('shoot');
   State.playerMissiles.push({turretIndex:turret.id,freezer:true,x:turret.x,y:CONSTANTS.HEIGHT-40,tx:x,ty:y,spd:CONSTANTS.MISSILE_SPEED,ang:Math.atan2(y-(CONSTANTS.HEIGHT-40),x-turret.x)});
 }
 function fireChain(turret,x,y){
-  turret.ammo--; turret.cool=CONSTANTS.TURRET_COOLDOWN; play('shoot');
+  consumeCharge(turret); turret.cool=CONSTANTS.TURRET_COOLDOWN; play('shoot');
   State.playerMissiles.push({turretIndex:turret.id,chain:true,x:turret.x,y:CONSTANTS.HEIGHT-40,tx:x,ty:y,spd:CONSTANTS.MISSILE_SPEED,ang:Math.atan2(y-(CONSTANTS.HEIGHT-40),x-turret.x)});
 }
 function fireSeeker(turret,x,y){
-  turret.ammo--; turret.cool=CONSTANTS.TURRET_COOLDOWN; play('shoot');
+  consumeCharge(turret); turret.cool=CONSTANTS.TURRET_COOLDOWN; play('shoot');
   State.playerMissiles.push({turretIndex:turret.id,x:turret.x,y:CONSTANTS.HEIGHT-40,tx:x,ty:y,spd:CONSTANTS.MISSILE_SPEED,ang:Math.atan2(y-(CONSTANTS.HEIGHT-40),x-turret.x),spawnSeekers:true});
 }
 
 function updateMissiles(dt){
   for(var i=State.playerMissiles.length-1;i>=0;i--){
     var m=State.playerMissiles[i];
+    if(m.seeker && !m.armed){
+      if(now()>=m.armTime){m.armed=true; m.life=CONSTANTS.SEEKER_LIFETIME;}
+      continue;
+    }
+    if(m.seeker){
+      m.life-=dt;
+      if(m.life<=0){ explode(m.x,m.y,{small:true,turretIndex:m.turretIndex}); State.playerMissiles.splice(i,1); continue; }
+      var target=findNearestEnemy(m.x,m.y);
+      if(target){m.tx=target.x; m.ty=target.y;}
+    }
     var dx=m.tx-m.x,dy=m.ty-m.y;
     var dist=Math.sqrt(dx*dx+dy*dy);
     var step=m.spd*dt;
@@ -47,30 +63,9 @@ function updateMissiles(dt){
       m.y+=dy/dist*step;
       m.ang=Math.atan2(dy,dx);
     }
-    if(m.seeker){
-      m.life-=dt;
-      if(m.life<=0){
-        explode(m.x,m.y,m); State.playerMissiles.splice(i,1); continue;
-      }
-      var target=findNearestEnemy(m.x,m.y);
-      if(target){m.tx=target.x; m.ty=target.y;}
-    }
   }
   for(var j=State.explosions.length-1;j>=0;j--){
     var e=State.explosions[j];
-    if(e.chain){
-      e.life-=dt;
-      for(var k=State.enemies.length-1;k>=0;k--){
-        var en=State.enemies[k];
-        if(Math.abs(en.y-e.y)<4){
-          if(en.immuneUntil && now()<en.immuneUntil) continue;
-          en.hitBy=e.turretIndex;
-          enemyHit(k);
-        }
-      }
-      if(e.life<=0) State.explosions.splice(j,1);
-      continue;
-    }
     e.r+=200*dt;
     if(e.r>e.max) e.life-=dt;
     for(var k=State.enemies.length-1;k>=0;k--){
@@ -99,28 +94,46 @@ function updateMissiles(dt){
   }
 }
 
-function explode(x,y,missile){
+function explode(x,y,opts){
   var max=CONSTANTS.EXPLOSION_RADIUS;
-  if(missile && missile.small) max=20;
-  if(missile && missile.chain){
-    State.explosions.push({chain:true,y:y,life:0.3,turretIndex:missile.turretIndex,color:CONSTANTS.COLORS.ACCENT2});
+  if(opts && opts.radius) max=opts.radius;
+  if(opts && opts.small) max=CONSTANTS.EXPLOSION_RADIUS*0.5;
+  if(opts && opts.chain){
+    var step=CONSTANTS.EXPLOSION_RADIUS*2; var rad=CONSTANTS.EXPLOSION_RADIUS*0.5;
+    function spawn(cx){ State.explosions.push({x:cx,y:y,r:1,max:rad,life:0.2,turretIndex:opts.turretIndex}); }
+    spawn(x);
+    function prop(cx,dir){
+      var nx=cx+dir*step;
+      if(nx<0||nx>CONSTANTS.WIDTH) return;
+      setTimeout(function(){spawn(nx); prop(nx,dir);}, randRange(40,60));
+    }
+    prop(x,1); prop(x,-1);
     play('explode'); shake();
     return;
   }
-  var exp={x:x,y:y,r:1,max:max,life:0.3,turretIndex:missile?missile.turretIndex:0,enemy:missile&&missile.enemy};
+  var exp={x:x,y:y,r:1,max:max,life:0.3,turretIndex:opts?opts.turretIndex:0,enemy:opts&&opts.enemy};
   State.explosions.push(exp); play('explode'); shake();
-  if(missile && missile.cluster){
-    for(var a=0;a<8;a++){
-      var angle=a*Math.PI/4;
-      State.explosions.push({x:x+Math.cos(angle)*max,y:y+Math.sin(angle)*max,r:1,max:12,life:0.2,turretIndex:exp.turretIndex});
+  if(opts && opts.cluster){
+    var N=12; var groups=3; var rad=max; var small=rad*0.5;
+    for(var g=0; g<groups; g++){
+      (function(g){
+        setTimeout(function(){
+          for(var a=0;a<4;a++){
+            var angle=(g*4+a)*Math.PI*2/N;
+            State.explosions.push({x:x+Math.cos(angle)*rad,y:y+Math.sin(angle)*rad,r:1,max:small,life:0.2,turretIndex:exp.turretIndex});
+          }
+        }, g*50);
+      })(g);
     }
   }
-  if(missile && missile.freezer){
+  if(opts && opts.freezer){
     State.freezeUntil=now()+CONSTANTS.FREEZE_DURATION; setBlueActive(true); play('freeze_on');
   }
-  if(missile && missile.spawnSeekers){
-    for(var s=0;s<2;s++){
-      State.playerMissiles.push({turretIndex:missile.turretIndex,seeker:true,small:true,x:x,y:y,tx:x,ty:y,spd:CONSTANTS.MISSILE_SPEED,life:CONSTANTS.SEEKER_LIFETIME});
+  if(opts && opts.spawnSeekers){
+    var ang=opts.ang||0; var nx=-Math.sin(ang), ny=Math.cos(ang); var off=max+2;
+    for(var s=-1; s<=1; s+=2){
+      var px=x+nx*off*s, py=y+ny*off*s;
+      State.playerMissiles.push({turretIndex:opts.turretIndex,seeker:true,small:true,x:px,y:py,tx:px,ty:py,spd:CONSTANTS.MISSILE_SPEED,armTime:now()+0.06,armed:false});
     }
   }
 }
@@ -141,7 +154,7 @@ function drawMissiles(ctx){
     ctx.save();
     ctx.translate(m.x,m.y);
     ctx.rotate(m.ang||0);
-    var sz=m.small?2:3;
+    var sz=m.small?1.4:2.1;
     ctx.fillStyle='#fff';
     ctx.beginPath();
     ctx.moveTo(sz,0);
@@ -157,19 +170,10 @@ function drawMissiles(ctx){
   }
   for(var j=0;j<State.explosions.length;j++){
     var e=State.explosions[j];
-    if(e.chain){
-      ctx.strokeStyle=e.color||'rgba(255,255,255,0.6)';
-      ctx.lineWidth=3;
-      ctx.beginPath();
-      ctx.moveTo(0,e.y);
-      ctx.lineTo(CONSTANTS.WIDTH,e.y);
-      ctx.stroke();
-    }else{
-      ctx.strokeStyle='rgba(255,255,255,0.6)';
-      ctx.lineWidth=1;
-      ctx.beginPath();
-      ctx.arc(e.x,e.y,e.r,0,Math.PI*2);
-      ctx.stroke();
-    }
+    ctx.strokeStyle='rgba(255,255,255,0.6)';
+    ctx.lineWidth=1;
+    ctx.beginPath();
+    ctx.arc(e.x,e.y,e.r,0,Math.PI*2);
+    ctx.stroke();
   }
 }
