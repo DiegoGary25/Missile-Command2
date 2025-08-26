@@ -115,14 +115,15 @@ function loop(t){
   requestAnimationFrame(loop);
   var n=now();
   var dt=n-lastTime; lastTime=n;
+  var rate=State.overdriveUntil>now()?4:1;
   for(var i=0;i<State.turrets.length;i++){
     var turr=State.turrets[i];
     if(!turr.alive) continue;
-    if(turr.cool>0) turr.cool-=dt;
+    if(turr.cool>0){ turr.cool-=dt*rate; if(turr.cool<0) turr.cool=0; }
     for(var c=0;c<2;c++){
       if(turr.charges[c]>0){
         var was=turr.charges[c];
-        turr.charges[c]-=dt;
+        turr.charges[c]-=dt*rate;
         if(turr.charges[c]<=0){
           turr.charges[c]=0;
           if(was>0) play('reload');

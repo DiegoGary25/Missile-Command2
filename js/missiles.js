@@ -19,7 +19,7 @@ function shoot(turret,x,y){
   }
 }
 
-function cooldown(){ return State.overdriveUntil>now()?CONSTANTS.TURRET_COOLDOWN/4:CONSTANTS.TURRET_COOLDOWN; }
+function cooldown(){ return CONSTANTS.TURRET_COOLDOWN; }
 
 function fireNormal(turret,x,y){
   consumeCharge(turret); turret.cool=cooldown(); play('shoot');
