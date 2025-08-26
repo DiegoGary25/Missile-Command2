@@ -9,6 +9,7 @@ var State = {
   enemiesToSpawn:0,
   multiplierLevel:1,
   multiplierCharge:0,
+  multiplierDowngraded:false,
   freezeUntil:0,
   nextPowerup:0,
   bannerTimer:0,
@@ -38,6 +39,7 @@ function resetState(){
   State.enemiesToSpawn=0;
   State.multiplierLevel=1;
   State.multiplierCharge=0;
+  State.multiplierDowngraded=false;
   State.freezeUntil=0;
   State.nextPowerup=0;
   State.bannerTimer=0;
