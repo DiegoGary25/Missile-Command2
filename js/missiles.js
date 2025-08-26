@@ -12,7 +12,6 @@ function shoot(turret,x,y){
     else if(turret.special==='chain') fireChain(turret,x,y);
     else if(turret.special==='seeker') fireSeeker(turret,x,y);
     else if(turret.special==='gravity') fireGravity(turret,x,y);
-    else if(turret.special==='overdrive') activateOverdrive(turret);
     else if(turret.special==='mine') fireMines(turret,x,y);
     turret.special=null;
   }else{
@@ -47,8 +46,9 @@ function fireGravity(turret,x,y){
   consumeCharge(turret); turret.cool=cooldown(); play('shoot');
   State.playerMissiles.push({turretIndex:turret.id,gravity:true,x:turret.x,y:CONSTANTS.HEIGHT-40,tx:x,ty:y,spd:CONSTANTS.MISSILE_SPEED,ang:Math.atan2(y-(CONSTANTS.HEIGHT-40),x-turret.x),od:State.overdriveUntil>now()});
 }
-function activateOverdrive(turret){
-  consumeCharge(turret); turret.cool=cooldown(); State.overdriveUntil=now()+CONSTANTS.OVERDRIVE_TIME;
+function activateOverdrive(){
+  State.overdriveUntil=now()+CONSTANTS.OVERDRIVE_TIME;
+  setRedActive(true);
 }
 function fireMines(turret,x,y){
   consumeCharge(turret); turret.cool=cooldown(); play('shoot');
@@ -145,11 +145,18 @@ function explode(x,y,opts){
   State.explosions.push(exp);
   if(!opts || !opts.visual){ play('bomb'); shake(); }
   if(opts && opts.cluster){
-    for(var s=0;s<12;s++){
-      var ang=s*Math.PI*2/12;
-      var dist=CONSTANTS.EXPLOSION_RADIUS*2;
-      State.playerMissiles.push({turretIndex:opts.turretIndex,shard:true,small:true,x:x,y:y,tx:x+Math.cos(ang)*dist,ty:y+Math.sin(ang)*dist,spd:CONSTANTS.MISSILE_SPEED*0.8,radius:CONSTANTS.EXPLOSION_RADIUS*0.5,od:State.overdriveUntil>now()});
-    }
+    (function(){
+      for(var s=0;s<12;s++){
+        (function(idx){
+          var ang=-Math.PI/2+idx*Math.PI*2/12;
+          setTimeout(function(){
+            var ex=x+Math.cos(ang)*max;
+            var ey=y+Math.sin(ang)*max;
+            explode(ex,ey,{small:true,turretIndex:opts.turretIndex});
+          },1000+idx*100);
+        })(s);
+      }
+    })();
   }
   if(opts && opts.gravity){
     State.gravityWells.push({x:x,y:y,rad:CONSTANTS.EXPLOSION_RADIUS*3,time:0,turretIndex:opts.turretIndex});
@@ -170,11 +177,11 @@ function explode(x,y,opts){
 }
 
 function spawnMines(x,y,ti){
-  var off=CONSTANTS.EXPLOSION_RADIUS;
-  for(var i=0;i<3;i++){
-    var px=x+randRange(-off,off);
-    var py=y+randRange(-off,off);
-    State.mines.push({x:px,y:py,armed:false,arm:now()+CONSTANTS.MINE_ARM,expire:now()+CONSTANTS.MINE_LIFE,turretIndex:ti});
+  for(var i=0;i<5;i++){
+    var ang=randRange(0,Math.PI*2);
+    var dist=CONSTANTS.EXPLOSION_RADIUS*3*randRange(0.8,1.2);
+    var speed=dist/CONSTANTS.MINE_ARM;
+    State.mines.push({x:x,y:y,vx:Math.cos(ang)*speed,vy:Math.sin(ang)*speed,armed:false,arm:now()+CONSTANTS.MINE_ARM,expire:now()+CONSTANTS.MINE_LIFE,turretIndex:ti});
   }
 }
 
@@ -202,16 +209,20 @@ function updateGravity(dt){
 function updateMines(dt){
   for(var i=State.mines.length-1;i>=0;i--){
     var m=State.mines[i];
-    if(!m.armed && now()>=m.arm) m.armed=true;
+    if(!m.armed){
+      m.x+=m.vx*dt; m.y+=m.vy*dt;
+      if(now()>=m.arm){m.armed=true; m.vx=m.vy=0;}
+    }
     if(now()>=m.expire){
       explode(m.x,m.y,{turretIndex:m.turretIndex});
       State.mines.splice(i,1);
       continue;
     }
     if(m.armed){
+      var rad=CONSTANTS.EXPLOSION_RADIUS, r2=rad*rad;
       for(var e=State.enemies.length-1;e>=0;e--){
         var en=State.enemies[e];
-        if(distanceSq(m.x,m.y,en.x,en.y)<CONSTANTS.EXPLOSION_RADIUS*CONSTANTS.EXPLOSION_RADIUS){
+        if(distanceSq(m.x,m.y,en.x,en.y)<=r2){
           explode(m.x,m.y,{turretIndex:m.turretIndex});
           State.mines.splice(i,1);
           break;
@@ -261,10 +272,11 @@ function drawMissiles(ctx){
   }
   for(var g=0;g<State.gravityWells.length;g++){
     var w=State.gravityWells[g];
+    var r=w.rad*(0.8+0.2*Math.sin(w.time*4));
     ctx.strokeStyle='rgba(127,81,255,0.6)';
-    ctx.beginPath(); ctx.arc(w.x,w.y,w.rad,0,Math.PI*2); ctx.stroke();
+    ctx.beginPath(); ctx.arc(w.x,w.y,r,0,Math.PI*2); ctx.stroke();
     ctx.save(); ctx.translate(w.x,w.y); ctx.rotate(now()*2); ctx.strokeStyle='rgba(127,81,255,0.3)';
-    ctx.beginPath(); ctx.moveTo(0,0); ctx.lineTo(w.rad,0); ctx.stroke(); ctx.restore();
+    ctx.beginPath(); ctx.moveTo(0,0); ctx.lineTo(r,0); ctx.stroke(); ctx.restore();
   }
   for(var m=0;m<State.mines.length;m++){
     var mine=State.mines[m];

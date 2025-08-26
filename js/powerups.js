@@ -12,6 +12,12 @@ function maybeSpawnCarrier(){
 }
 
 function grantPower(turret,type){
+  if(type==='overdrive'){
+    banner('OVERDRIVE');
+    play('powerup');
+    activateOverdrive();
+    return;
+  }
   if(turret.special){
     var candidates=[];
     for(var i=0;i<State.turrets.length;i++){

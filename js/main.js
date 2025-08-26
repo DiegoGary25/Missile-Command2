@@ -23,6 +23,7 @@ function startRound(){
   for(var i=0;i<State.turrets.length;i++){
     if(State.turrets[i].alive) State.turrets[i].charges=[0,0];
   }
+  State.overdriveUntil=0; setRedActive(false);
 }
 
 function maybeRestoreAssets(){
@@ -136,6 +137,7 @@ function loop(t){
   updateEnemies(dt);
   updateMissiles(dt);
   if(State.freezeUntil && now()>State.freezeUntil){State.freezeUntil=0; setBlueActive(false);}
+  if(State.overdriveUntil && now()>State.overdriveUntil){State.overdriveUntil=0; setRedActive(false);}
   if(State.multiplierDowngraded){
     State.multiplierDowngraded=false;
   }else{

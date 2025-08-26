@@ -22,6 +22,11 @@ function setBlueActive(a){
   if(!a) play('powerup');
 }
 
+function setRedActive(a){
+  if(a){vignetteEl.classList.add('overdrive');}
+  else{vignetteEl.classList.remove('overdrive');}
+}
+
 function banner(text){
   var div=document.createElement('div');
   div.className='banner';
