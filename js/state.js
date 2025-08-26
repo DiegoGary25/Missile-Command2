@@ -28,7 +28,7 @@ function resetState(){
   State.cities.push({x:t1+s1,alive:true},{x:t1+2*s1,alive:true},{x:t1+3*s1,alive:true});
   State.cities.push({x:t2+s2,alive:true},{x:t2+2*s2,alive:true},{x:t2+3*s2,alive:true});
   for(var i=0;i<CONSTANTS.TURRETS.length;i++){
-    State.turrets.push({x:CONSTANTS.TURRETS[i].x,ammo:CONSTANTS.AMMO_PER_ROUND,cool:0,special:null,id:i,angle:-Math.PI/2,alive:true});
+    State.turrets.push({x:CONSTANTS.TURRETS[i].x,charges:[0,0],cool:0,special:null,id:i,angle:-Math.PI/2,alive:true});
   }
   State.enemies=[];
   State.playerMissiles=[];
