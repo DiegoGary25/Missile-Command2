@@ -1,0 +1,192 @@
+/* ===== Colors (match Breakout palette/aliases) ===== */
+:root {
+  --bg:#0d0f12;
+  --ui:#ffffff;
+  --accent1:#51FFD6;  /* multiplier bar / highlights */
+  --accent2:#7F51FF;  /* asteroid stroke */
+  --accent3:#FF517A;  /* enemy stroke */
+  --accent4:#D1FF51;  /* power-ups / pierce bullets */
+  --warning:#FFB016;  /* bombs / danger */
+}
+
+
+/* ===== Fonts (use same WOFF2 as Breakout) ===== */
+@font-face {
+  font-family: 'Pressura';
+  src: url('fonts/GT-Pressura-Standard-Regular.woff2') format('woff2');
+  font-display: swap;
+}
+
+@font-face {
+  font-family: 'Skrappa';
+  src: url('fonts/WTSkrappa-Generous.woff2') format('woff2');
+  font-display: swap;
+}
+
+/* ===== Base layout ===== */
+html, body {
+  height: 100%;
+  margin: 0;
+  background: var(--bg);
+  color: var(--ui);
+  font-family: 'Pressura', sans-serif;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.hidden{ display:none; }
+
+#shell {
+  display: flex;
+  align-items: flex-start;
+  justify-content: center;
+  gap: 16px;
+}
+
+/* ===== Canvas ===== */
+#playfield {
+  position: relative;           /* anchor overlay & vignette to canvas box */
+  display: inline-block;
+  border-radius: 8px;
+}
+
+#game {
+  display: block;
+  background: radial-gradient(circle at center, #111 0%, #000 70%);
+  border: 2px solid var(--accent1);
+  border-radius: 8px;
+}
+
+/* ===== Side bars ===== */
+#powerup, #multiplier {
+  position: relative;
+  width: 40px;
+  height: 600px;
+  border: 2px solid var(--accent1);
+  border-radius: 8px;
+  overflow: hidden;
+}
+
+#powerup-fill,
+#multiplier-fill {
+  position: absolute;
+  bottom: 0;
+  width: 100%;
+  height: 0%;
+  background: var(--color-4);
+  transition: height 0.2s ease-out;
+}
+
+#multiplier-label {
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  transform: translate(-50%,-50%);
+  font-size: 20px;
+}
+
+/* Pulse on powerup gain (optional) */
+#powerup.pulse { animation: barPulse 0.3s; }
+@keyframes barPulse {
+  0%   { box-shadow: 0 0 0 0 var(--ui); }
+  100% { box-shadow: 0 0 0 6px transparent; }
+}
+
+/* ===== Announcements (optional) ===== */
+#announcements {
+  position: absolute;
+  top: 12%;
+  width: 100%;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  pointer-events: none;
+}
+
+.banner {
+  background: var(--color-4);
+  color: var(--bg);
+  padding: 8px 16px;
+  margin: 4px;
+  border-radius: 8px;
+  animation: pop 0.4s ease, fade 1s 2s forwards;
+}
+
+@keyframes pop { 0% { transform: scale(0); } 100% { transform: scale(1); } }
+@keyframes fade { to { opacity: 0; transform: translateY(-20px); } }
+
+/* ===== Vignette (Breakout-style) ===== */
+#vignette{
+  position: absolute;
+  inset: 0;
+  pointer-events: none;
+  border-radius: 8px;
+  background: radial-gradient(circle at center, rgba(255,0,0,0) 60%, rgba(255,0,0,0.4) 80%, rgba(255,0,0,0.6) 100%);
+  opacity: 0;
+  transition: opacity 0.3s;
+  z-index: 14;
+}
+#vignette.show { opacity: 1; animation: vignettePulse 1s alternate infinite; }
+@keyframes vignettePulse { from{opacity:0.2;} to{opacity:0.6;} }
+
+#vignette.flash { opacity:1; animation: shake 0.15s; }
+@keyframes shake { 0%{transform:translateY(0);} 50%{transform:translateY(-3px);} 100%{transform:translateY(0);} }
+
+/* ===== Breakout-style OVERLAY (covers only the playfield) ===== */
+#overlay{
+  position: absolute;
+  inset: 0;                          /* top/right/bottom/left: 0 */
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  background: rgba(0,0,0,0.6);
+  border-radius: 8px;
+  z-index: 20;
+  color: var(--ui);
+  font-family: 'Pressura', sans-serif;
+}
+
+#overlayBox{
+  background: rgba(0,0,0,0.8);
+  padding: 40px;
+  border-radius: 20px;
+  text-align: center;
+  animation: overlayShow 0.3s ease;
+}
+
+/* Make sure hidden wins against the #overlay rule */
+#overlay.hidden { 
+  display: none !important;
+}
+
+
+#message{
+  background: var(--accent1);
+  color: #000;
+  font-family: 'Skrappa', sans-serif;
+  font-size: 48px;
+  padding: 10px 40px;
+  border-radius: 40px;
+  margin-bottom: 20px;
+}
+
+#playAgain{
+  margin-top: 10px;
+  padding: 10px 30px;
+  background: var(--accent1);
+  border: none;
+  color: #000;
+  cursor: pointer;
+  font-size: 16px;
+  border-radius: 40px;
+  font-family: 'Pressura', sans-serif;
+  transition: opacity 0.2s;
+}
+#playAgain:hover { opacity: 0.8; }
+
+@keyframes overlayShow {
+  from { transform: scale(0.8); opacity: 0; }
+  to   { transform: scale(1);   opacity: 1; }
+}

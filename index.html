@@ -1,0 +1,42 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <title>Asteroids Arcade</title>
+  <link rel="stylesheet" href="style.css" />
+</head>
+<body>
+  <div id="shell">
+    <!-- Left bar -->
+    <div id="powerup">
+      <div id="powerup-fill"></div>
+    </div>
+
+    <!-- Playfield (overlay + vignette are pinned to this box) -->
+    <div id="playfield">
+      <canvas id="game" width="800" height="600"></canvas>
+      <div id="vignette" class="hidden"></div>
+
+      <!-- Breakout-style overlay -->
+      <div id="overlay" class="hidden">
+        <div id="overlayBox">
+          <div id="message">GAME OVER</div>
+          <button id="playAgain">Restart</button>
+        </div>
+      </div>
+    </div>
+
+    <!-- Right bar -->
+    <div id="multiplier">
+      <div id="multiplier-fill"></div>
+      <span id="multiplier-label">x1</span>
+    </div>
+  </div>
+
+  <!-- Global banners/announcements (optional) -->
+  <div id="announcements"></div>
+
+  <!-- Your game logic -->
+  <script src="game.js"></script>
+</body>
+</html>
