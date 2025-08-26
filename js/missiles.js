@@ -131,14 +131,20 @@ function explode(x,y,opts){
   if(opts && opts.small) max=CONSTANTS.EXPLOSION_RADIUS*0.5;
   if(opts && opts.chain){
     var step=CONSTANTS.EXPLOSION_RADIUS*2; var rad=CONSTANTS.EXPLOSION_RADIUS*0.5;
-    function spawn(cx){ State.explosions.push({x:cx,y:y,r:1,max:rad,life:0.2,turretIndex:opts.turretIndex}); }
-    spawn(x);
-    function prop(cx,dir){
+    function spawn(cx,cy){ State.explosions.push({x:cx,y:cy,r:1,max:rad,life:0.2,turretIndex:opts.turretIndex}); }
+    spawn(x,y);
+    function propH(cx,dir){
       var nx=cx+dir*step;
       if(nx<0||nx>CONSTANTS.WIDTH) return;
-      setTimeout(function(){spawn(nx); prop(nx,dir);}, randRange(40,60));
+      setTimeout(function(){spawn(nx,y); propH(nx,dir);}, randRange(40,60));
     }
-    prop(x,1); prop(x,-1);
+    function propV(cy,dir){
+      var ny=cy+dir*step;
+      if(ny<0||ny>CONSTANTS.HEIGHT) return;
+      setTimeout(function(){spawn(x,ny); propV(ny,dir);}, randRange(40,60));
+    }
+    propH(x,1); propH(x,-1);
+    propV(y,1); propV(y,-1);
     play('bomb'); shake();
     return;
   }
@@ -146,18 +152,19 @@ function explode(x,y,opts){
   State.explosions.push(exp);
   if(!opts || !opts.visual){ play('bomb'); shake(); }
   if(opts && opts.cluster){
-    var travel=0.2;
-    var base=2000, step=200;
+    var travel=0.4;
+    var ring=max*1.6;
+    var delay=300, step=80;
     for(var s=0;s<12;s++){
       (function(idx){
         var ang=-Math.PI/2+idx*Math.PI*2/12;
-        var ex=x+Math.cos(ang)*max;
-        var ey=y+Math.sin(ang)*max;
-        var vx=Math.cos(ang)*max/travel;
-        var vy=Math.sin(ang)*max/travel;
+        var ex=x+Math.cos(ang)*ring;
+        var ey=y+Math.sin(ang)*ring;
+        var vx=Math.cos(ang)*ring/travel;
+        var vy=Math.sin(ang)*ring/travel;
         setTimeout(function(){
           State.shrapnels.push({x:x,y:y,vx:vx,vy:vy,life:travel,ex:ex,ey:ey,turretIndex:opts.turretIndex});
-        },base+idx*step-travel*1000);
+        },delay+idx*step);
       })(s);
     }
   }

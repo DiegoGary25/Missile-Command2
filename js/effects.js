@@ -23,7 +23,8 @@ function setBlueActive(a){
 }
 
 function setRedActive(a){
-  // overdrive visual cues are handled in canvas rendering; overlay removed
+  if(a){ playfieldEl.classList.add('overdrive'); }
+  else{ playfieldEl.classList.remove('overdrive'); }
 }
 
 function banner(text){

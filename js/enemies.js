@@ -63,7 +63,8 @@ function updateEnemies(dt){
     e.ang=ang;
     if(distanceSq(e.x,e.y,e.tx,e.ty)<25){
       play('enemyShot');
-      explode(e.tx,e.ty,{enemy:true});
+      var vis = e.target && (e.target.type==='city'||e.target.type==='turret');
+      explode(e.tx,e.ty, vis?{visual:true}:{enemy:true});
       State.enemies.splice(i,1);
       if(e.target){
         if(e.target.type==='city'){
